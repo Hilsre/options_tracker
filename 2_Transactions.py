@@ -34,7 +34,7 @@ with tabs[0]:
         basis_asset = st.selectbox("Underlying Asset", basis_options, format_func=lambda x: x[1],
                                    placeholder="Underlying Asset", key="buy_basis_asset")
         product_type = st.selectbox("Product Type", type_options, format_func=lambda x: x[1], key="buy_product_type")
-        if product_type[1] == "Optionsschein":
+        if product_type[1].lower() == "warrant":
             strategy_filtered = ["Call", "Put"]
         else:
             strategy_filtered = ["Long", "Short"]
