@@ -48,4 +48,4 @@ source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 
 # 4. Launch the app
-streamlit run 2_Transactions.py
+streamlit run 1_Overview.py
