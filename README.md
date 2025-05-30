@@ -4,6 +4,15 @@ An interactive tool for managing and analyzing leveraged products and derivative
 
 ---
 
+## 🖥️Interface Preview
+| Buy                           | Sell                            | Transactions                            | Master Data                                      | Settings                                |
+|-------------------------------|---------------------------------|-----------------------------------------|--------------------------------------------------|-----------------------------------------|
+| ![Buy](./images/buy_site.png) | ![Sell](./images/sell_site.png) | ![Transactions](./images/show_data.png) | ![Master Data ](./images/manage_master_data.png) | ![Settings](./images/settings_site.png) |
+
+
+
+---
+
 ## 🚀 Features
 
 - ✅ Record transactions: Buy / Rebuy / Partial Sell / Sell / Redemption / Knock-Out

@@ -1,11 +1,19 @@
+import streamlit as st
+from utils.settings_handler import load_settings
 from utils.db_helper import get_db
+
+if "tax_rate" not in st.session_state:
+    settings = load_settings()
+    st.session_state["tax_rate"] = settings["tax_rate"]
+
+tax_rate = st.session_state["tax_rate"]
 
 
 def calc_sell_tax(price, qty, price_paid, fee):
     diff = (price*qty) - price_paid - fee
     tax = 0
     if diff > 0:
-        tax = round((diff * 0.2782),2)
+        tax = round((diff * tax_rate),2)
 
     return ((price*qty) - fee - tax), tax
 
@@ -39,7 +47,7 @@ def calc_partial_sell_tax(trade_id, sell_qty, sell_price, fee):
 
     total_revenue = (sell_price * sell_qty) - fee
     gain = total_revenue - total_cost
-    tax = round(gain * 0.2782, 2) if gain > 0 else 0.0
+    tax = round(gain * tax_rate, 2) if gain > 0 else 0.0
     price_correct = 1 if total_revenue == ((sell_price * sell_qty) - fee - tax) else 0
 
     return {

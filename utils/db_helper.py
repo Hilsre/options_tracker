@@ -46,8 +46,8 @@ def new_transaction(**kwargs):
 def get_product_choices():
     conn = get_db()
     return [
-        (row["trade_id"], f"{row['direction']} @ {row['strike']}{row['currency']} {row['basis_name']}"
-                          f" (Open Quantity: {row['open_qty']})", row["open_qty"], row["product_id"], row["price_paid"])
+        (row["trade_id"], f"{row['direction']} @ {row['strike']}{row['currency']} {row['basis_name']}",
+         row["open_qty"], row["product_id"], row["price_paid"])
         for row in conn.execute("""           
         SELECT
             t.trade_id,

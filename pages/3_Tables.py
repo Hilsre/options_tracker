@@ -2,22 +2,26 @@ import streamlit as st
 import pandas as pd
 
 from utils.db_helper import get_db
+from utils.settings_handler import get_lang
 
 st.set_page_config(page_title="OptionsTracker – Tables", layout="wide", page_icon="📋")
-st.title("📋 Show Data")
+
+T = get_lang()
+
+st.title(T["title_table_site"])
 
 conn = get_db()
 
-st.subheader("📂 Select Table")
+st.subheader(T["select_table"])
 col1, col2 = st.columns([3, 1])
 with col1:
-    tab = st.selectbox("Choose table", ["Transactions", "Products"])
+    tab = st.selectbox(T["choose_table"], [T["transactions_table"], T["products_table"]])
 with col2:
-    limit = st.selectbox("Rows", [10, 25, 50, 100], index=1)
+    limit = st.selectbox(T["rows"], [10, 25, 50, 100], index=1)
 
 column_names = []
-if tab == "Products":
-    st.subheader("💼 Products Table")
+if tab == T["products_table"]:
+    st.subheader(T["products_table"])
     query = """
         SELECT bp.name,
                pt.name,
@@ -32,9 +36,9 @@ if tab == "Products":
         JOIN strike_currencies sc ON p.strike_currency_id = sc.id
         LIMIT ?
     """
-    column_names = ["Underlying Asset", "Product Type", "Strategy", "Strike", "WKN", "Expiry Date"]
+    column_names = T["table_columns_products"]
 else:
-    st.subheader("💳 Transactions Table")
+    st.subheader(T["transactions_table"])
     query = """
         SELECT d.name || '@' || CAST(p.strike AS TEXT) || sc.symbol || ' ' || bp.name,
                t.price,
@@ -52,7 +56,7 @@ else:
         JOIN actions a ON t.action_id = a.id
         LIMIT ?
     """
-    column_names = ["Name", "Price", "Quantity", "Tax", "Total", "Action", "Open Quantity", "Date"]
+    column_names = T["table_columns_transactions"]
 
 try:
     rows = conn.execute(query, (limit,)).fetchall()
@@ -60,7 +64,7 @@ try:
     if "Date" in df.columns:
         df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 except Exception as e:
-    st.error(f"Error loading data: {e}")
+    st.error(f"{T['error_loading']} {e}")
     df = pd.DataFrame()
 
 st.dataframe(df, use_container_width=True)
