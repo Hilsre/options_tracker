@@ -7,4 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["streamlit", "run", "1_Overview.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["sh", "-c", "python project_setup.py && streamlit run main.py"]
+
