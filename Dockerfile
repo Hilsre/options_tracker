@@ -7,5 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["sh", "-c", "python project_setup.py && streamlit run main.py"]
+CMD ["sh", "-c", "python project_setup.py && streamlit run 1_Overview.py"]
 
