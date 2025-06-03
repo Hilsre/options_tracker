@@ -28,10 +28,20 @@ st.session_state.language_code = LANGUAGES[lang_display]
 
 # ----- tax -----
 st.subheader(T["tax_section_settings_site"])
-default_tax = st.session_state.get("tax_rate", 0.0)
-new_tax = st.number_input(T["tax_rate_settings_site"], min_value=0.0000, max_value=1.0000, value=default_tax, step=0.0001, format="%.4f")
-st.caption(f"{T['default_tax_caption']}{default_tax}")
-st.session_state.tax_rate = new_tax
+col1, col2, col3 = st.columns(3)
+with col1:
+    default_tax = st.session_state.get("tax_rate", 0.0)
+    new_tax = st.number_input(T["tax_rate_settings_site"], min_value=0.0000, max_value=1.0000, value=default_tax, step=0.0001, format="%.4f")
+    st.caption(f"{T['default_tax_caption']}{default_tax}")
+    st.session_state.tax_rate = new_tax
+with col2:
+    default_carryforward = st.session_state.get("loss_carryforward", 0.0)
+    carryforward = st.number_input(T["loss_carryforward_settings_site"], min_value=0.0, value=0.0, step=0.01)
+    st.session_state.loss_carryforward = carryforward
+with col3:
+    default_tax_allowance = st.session_state.get("tax_allowance", 0.0)
+    tax_allowance = st.number_input(T["tax_allowance_settings_site"], min_value=0.0, value=0.0, step=0.01)
+    st.session_state.tax_allowance = tax_allowance
 
 # ----- date format -----
 st.subheader(T["date_section_settings_site"])
@@ -42,29 +52,25 @@ date_formats = {
     "MM/DD/YYYY": "MM/DD/YYYY"
 }
 
-# Aktuelles Format aus session_state oder Default
 current_format = st.session_state.get("date_format", "DD.MM.YYYY")
 
-# Versuche, das Label (Key) für das aktuelle Format zu finden
 matches = [k for k, v in date_formats.items() if v == current_format]
 date_label = matches[0] if matches else "DD.MM.YYYY"
 
-# Auswahl anzeigen
 new_date_label = st.selectbox(
     T["choose_date_format"],
     list(date_formats.keys()),
     index=list(date_formats.keys()).index(date_label)
 )
 
-# Neues Format speichern
 st.session_state.date_format = date_formats[new_date_label]
 
-
-# ----- Speichern -----
 if st.button(T["save_settings"]):
     save_settings({
         "language_code": st.session_state.language_code,
         "tax_rate": st.session_state.tax_rate,
-        "date_format": st.session_state.date_format
+        "date_format": st.session_state.date_format,
+        "tax_allowance": st.session_state.tax_allowance,
+        "loss_carryforward": st.session_state.loss_carryforward
     })
     st.rerun()

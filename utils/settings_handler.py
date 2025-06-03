@@ -29,7 +29,9 @@ def init_settings_db():
             user_id TEXT PRIMARY KEY,
             language_code TEXT DEFAULT 'de',
             tax_rate REAL DEFAULT 0.0,
-            date_format TEXT DEFAULT '%d.%m.%Y'
+            date_format TEXT DEFAULT '%d.%m.%Y',
+            tax_allowance REAL DEFAULT 0.0,
+            loss_carryforward REAL DEFAULT 0.0
         )
     """)
     conn.commit()
@@ -39,7 +41,7 @@ def init_settings_db():
 def load_settings(user_id="default"):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT language_code, tax_rate, date_format FROM settings WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT language_code, tax_rate, date_format, tax_allowance, loss_carryforward FROM settings WHERE user_id = ?", (user_id,))
     row = cursor.fetchone()
     conn.close()
 
@@ -47,23 +49,27 @@ def load_settings(user_id="default"):
         return {
             "language_code": row[0],
             "tax_rate": row[1],
-            "date_format": row[2]
+            "date_format": row[2],
+            "tax_allowance": row[3],
+            "loss_carryforward": row[4]
         }
     else:
-        save_settings({"language_code": "en", "tax_rate": 0.0, "date_format": "%d.%m.%Y"}, user_id)
+        save_settings({"language_code": "en", "tax_rate": 0.0, "date_format": "%d.%m.%Y", "tax_allowance": 0.0, "loss_carryforward": 0.0}, user_id)
         return load_settings(user_id)
 
 
 def save_settings(settings, user_id="default"):
     conn = get_db()
     conn.execute("""
-        INSERT INTO settings (user_id, language_code, tax_rate, date_format)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO settings (user_id, language_code, tax_rate, date_format, tax_allowance, loss_carryforward)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             language_code=excluded.language_code,
             tax_rate=excluded.tax_rate,
-            date_format=excluded.date_format
-    """, (user_id, settings["language_code"], settings["tax_rate"], settings["date_format"]))
+            date_format=excluded.date_format,
+            tax_allowance=excluded.tax_allowance,
+            loss_carryforward=excluded.loss_carryforward
+    """, (user_id, settings["language_code"], settings["tax_rate"], settings["date_format"], settings["tax_allowance"], settings["loss_carryforward"]))
     conn.commit()
     conn.close()
 
