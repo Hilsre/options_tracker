@@ -88,5 +88,7 @@ translations = {
     "settings_saved": "Einstellungen erfolgreich gespeichert",
     "tax_rate_settings_site": "💸Steuersatz (z.B. 0,26 für 26%)",
     "choose_date_format": "📅 Datumsformat wählen",
-    "default_tax_caption": "Aktueller Steuersatz: "
+    "default_tax_caption": "Aktueller Steuersatz: ",
+    "loss_carryforward_settings_site": "Verlusttopf",
+    "tax_allowance_settings_site": "Steuerfreibetrag"
 }

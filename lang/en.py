@@ -81,7 +81,9 @@ translations = {
     "settings_saved": "Settings saved successfully",
     "tax_rate_settings_site": "💸Tax rate (e.g. 0.26 for 26%)",
     "choose_date_format": "📅 Choose date format",
-    "default_tax_caption": "Current tax rate: "
+    "default_tax_caption": "Current tax rate: ",
+    "loss_carryforward_settings_site": "Loss Carryforward",
+    "tax_allowance_settings_site": "Tax Allowance"
 
 }
 

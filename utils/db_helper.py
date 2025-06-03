@@ -1,9 +1,10 @@
 import os
 import sqlite3
+import streamlit as st
 
 def get_db():
     base_path = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base_path, "..", "db", "options_tracker.db")
+    db_path = os.path.join(base_path, "..", "db", "new_test.db")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
@@ -77,3 +78,15 @@ def update_open_qty(trade_id, open_qty):
     conn = get_db()
     conn.execute("UPDATE transactions SET open_qty = ? WHERE trade_id = ?", (open_qty, trade_id,))
     conn.commit()
+
+def update_loss_carryforward(amount, user_id="default"):
+    conn=get_db()
+    conn.execute("UPDATE settings SET loss_carryforward = ? WHERE user_id = ?", (amount, user_id))
+    conn.commit()
+    st.session_state.loss_carryforward = amount
+
+def update_tax_allowance(amount, user_id="default"):
+    conn=get_db()
+    conn.execute("UPDATE settings SET tax_allowance = ? WHERE user_id = ?", (amount, user_id))
+    conn.commit()
+    st.session_state.tax_allowance = amount

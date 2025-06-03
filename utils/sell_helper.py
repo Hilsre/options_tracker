@@ -7,15 +7,31 @@ if "tax_rate" not in st.session_state:
     st.session_state["tax_rate"] = settings["tax_rate"]
 
 tax_rate = st.session_state["tax_rate"]
+tax_allowance = st.session_state["tax_allowance"]
+loss_carryforward = st.session_state["loss_carryforward"]
 
 
 def calc_sell_tax(price, qty, price_paid, fee):
-    diff = (price*qty) - price_paid - fee
+    gross_gain = (price*qty) - price_paid - fee
+    taxable_gain = gross_gain
     tax = 0
-    if diff > 0:
-        tax = round((diff * tax_rate),2)
+    if gross_gain > 0:
+        used_loss = min(loss_carryforward, gross_gain)
+        taxable_gain = taxable_gain - used_loss
+        new_loss_carryforward = loss_carryforward - used_loss
 
-    return ((price*qty) - fee - tax), tax
+        used_allowance = min(tax_allowance, taxable_gain)
+        taxable_gain -= used_allowance
+        new_allowance = tax_allowance - used_allowance
+
+        tax = round((taxable_gain * tax_rate),2)
+
+    else:
+        tax = 0
+        new_loss_carryforward = loss_carryforward + abs(gross_gain)
+        new_allowance = tax_allowance
+
+    return ((price*qty) - fee - tax), tax, new_loss_carryforward, new_allowance
 
 def calc_partial_sell_tax(trade_id, sell_qty, sell_price, fee):
     conn = get_db()
@@ -46,14 +62,33 @@ def calc_partial_sell_tax(trade_id, sell_qty, sell_price, fee):
         used_transactions.append((txn_id, used_qty))
 
     total_revenue = (sell_price * sell_qty) - fee
-    gain = total_revenue - total_cost
-    tax = round(gain * tax_rate, 2) if gain > 0 else 0.0
+    gross_gain = total_revenue - total_cost
+    taxable_gain = gross_gain
+    tax = 0
+    if gross_gain > 0:
+        used_loss = min(loss_carryforward, gross_gain)
+        taxable_gain = gross_gain - used_loss
+        new_loss_carryforward = loss_carryforward - used_loss
+
+        used_allowance = min(tax_allowance, taxable_gain)
+        taxable_gain -= used_allowance
+        new_allowance = tax_allowance - used_allowance
+
+        tax = round(taxable_gain * tax_rate, 2)
+
+    else:
+        tax = 0
+        new_loss_carryforward = loss_carryforward + abs(gross_gain)
+        new_allowance = tax_allowance
+
     price_correct = 1 if total_revenue == ((sell_price * sell_qty) - fee - tax) else 0
 
     return {
         "total_price": total_revenue-tax,
         "tax": tax,
-        "gain": gain,
-        "price_correct": price_correct
+        "gain": gross_gain-tax,
+        "price_correct": price_correct,
+        "loss_carryforward": new_loss_carryforward,
+        "tax_allowance": new_allowance
     }, used_transactions
 

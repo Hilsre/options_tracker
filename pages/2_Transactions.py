@@ -3,9 +3,10 @@ import pandas as pd
 from datetime import date
 
 
-from utils.db_helper import get_options, new_transaction, get_product_choices, update_open_qty, get_db
+from utils.db_helper import (get_options, new_transaction, get_product_choices, update_open_qty, get_db,
+                             update_loss_carryforward, update_tax_allowance)
 from utils.buy_helper import get_direction_id, get_or_create_product_id, get_or_create_trade_id
-from utils.sell_helper import calc_sell_tax, calc_partial_sell_tax
+from utils.sell_helper import calc_sell_tax, calc_partial_sell_tax, tax_allowance
 from utils.settings_handler import get_lang, load_settings
 
 st.set_page_config(page_title="OptionsTracker – Transactions", layout="wide", page_icon="📥")
@@ -150,6 +151,8 @@ with tabs[2]:
         temp = calc_sell_tax(price, qty, price_paid, fee)
         temp_total_price = temp[0]
         tax = temp[1]
+        loss_carryforward = temp[2]
+        tax_allowance = temp[3]
         col4, col5 = st.columns(2)
         with col4:
             total_price = st.number_input(T["total_price_tax"], value=temp_total_price, key="total_sell_price")
@@ -157,6 +160,11 @@ with tabs[2]:
             st.caption(f"{T['total_price']}: {price_paid}")
         with col5:
             tax = st.number_input(T["tax"], value=tax, key="sell_tax")
+            col6,col7,col8= st.columns(3)
+            with col6:
+                st.caption(f"{T['loss_carryforward_settings_site']}: {loss_carryforward}")
+            with col7:
+                st.caption(f"{T['tax_allowance_settings_site']}: {tax_allowance}")
         gain = st.number_input(T["estimated_gain_loss"], value=total_price-price_paid, disabled=True)
 
         txn_date = st.date_input(T["transaction_date"], value=date.today(), key="sell_date", format=date_format)
@@ -166,6 +174,8 @@ with tabs[2]:
             new_transaction(trade_id=trade_id, date=txn_date, product_id=product_id, price=price, qty=open_qty, fee=fee,
                     tax=tax, total_price=total_price, price_correct=price_correct, action_id=2, open_qty=0, gain=round(gain,2))
             update_open_qty(trade_id, open_qty=0)
+            update_loss_carryforward(loss_carryforward)
+            update_tax_allowance(tax_allowance)
             st.rerun()
 
 # Parital Sell action
@@ -197,12 +207,19 @@ with tabs[3]:
         tax = temp_calc["tax"]
         gain = temp_calc["gain"]
         price_correct = temp_calc["price_correct"]
+        loss_carryforward = temp_calc["loss_carryforward"]
+        tax_allowance = temp_calc["tax_allowance"]
         col4, col5 = st.columns(2)
         with col4:
             total_price = st.number_input(T["total_price_tax"], value=total_price, key="partial_total_sell_price")
             st.caption(f"{T['total_price']}: {price_paid}")
         with col5:
             tax = st.number_input(T["tax"], value=tax, key="partial_sell_tax")
+            col6,col7,col8= st.columns(3)
+            with col6:
+                st.caption(f"{T['loss_carryforward_settings_site']}: {loss_carryforward}")
+            with col7:
+                st.caption(f"{T['tax_allowance_settings_site']}: {tax_allowance}")
         gain = st.number_input(T["estimated_gain_loss"], value=gain, disabled=True, key="partial_sell_gain")
 
         txn_date = st.date_input(T["transaction_date"], value=date.today(), key="partial_sell_date", format=date_format)
@@ -219,6 +236,8 @@ with tabs[3]:
                     current_qty = res[0]
                     new_qty = max(current_qty - used_qty, 0)
                     conn.execute("UPDATE transactions SET open_qty = ? WHERE id = ?", (new_qty, txn_id))
+            update_loss_carryforward(loss_carryforward)
+            update_tax_allowance(tax_allowance)
             conn.commit()
             st.rerun()
 
@@ -251,6 +270,7 @@ with tabs[4]:
                             tax=0, total_price=total_price, price_correct=1, action_id=5, open_qty=None,
                             gain=round(gain, 2))
             update_open_qty(trade_id=trade_id, open_qty=0)
+            update_loss_carryforward(gain)
             st.rerun()
 
 
@@ -279,6 +299,7 @@ with tabs[5]:
                             tax=0, total_price=0, price_correct=1, action_id=6, open_qty=None,
                             gain=round(gain, 2))
             update_open_qty(trade_id=trade_id, open_qty=0)
+            update_loss_carryforward(gain)
             st.rerun()
 
 
