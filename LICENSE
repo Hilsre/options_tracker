@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Hilsre
+Copyright (c) 2024 Hilsre - Options Tracker
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,58 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Additional Terms for Financial Software
+
+IMPORTANT DISCLAIMER: This software is designed for personal financial tracking 
+and educational purposes only. 
+
+### Financial Calculations Disclaimer
+
+The tax calculations, FIFO (First In, First Out) logic, and gain/loss 
+computations provided by this software are:
+
+- Based on general interpretations of German tax law as of 2024
+- Not a substitute for professional tax advice
+- Subject to changes in tax regulations and individual circumstances
+- Provided without guarantee of accuracy or completeness
+
+### User Responsibilities
+
+Users of this software acknowledge that they:
+
+- Are solely responsible for the accuracy of data entered into the system
+- Must verify all calculations independently before using them for tax purposes
+- Should consult with qualified tax professionals for official tax compliance
+- Understand that the software creators assume no liability for financial losses
+- Are responsible for maintaining their own data backups and security
+
+### Regulatory Compliance
+
+This software does not:
+
+- Provide investment advice or recommendations
+- Guarantee compliance with any specific tax jurisdiction
+- Replace professional financial or legal counsel
+- Warrant fitness for commercial or professional use
+
+### Data Privacy
+
+While this software runs locally and does not transmit data externally:
+
+- Users are responsible for securing their own financial data
+- No encryption is provided by default for stored data
+- Users should implement their own security measures as appropriate
+- Consider the sensitivity of financial data when deploying or sharing
+
+### Limitation of Liability
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+FINANCIAL LOSSES, TAX PENALTIES, REGULATORY VIOLATIONS, OR OTHER DAMAGES
+ARISING FROM THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+OF SUCH DAMAGES.
+
+By using this software, you acknowledge that you have read, understood, and
+agree to these terms and disclaimers.
