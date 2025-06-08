@@ -230,7 +230,7 @@ if __name__ == "__main__":
             fill_tables()
         else:
             print("Available options:")
-            print("  python init_db.py)
+            print("  python init_db.py")
             print("  python init_db.py reset")
             print("  python init_db.py check")
             print("  python init_db.py fill")
