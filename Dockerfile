@@ -44,35 +44,28 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "🚀 Starte Options Tracker..."\n\
+\n\
+# Stelle sicher, dass das Datenverzeichnis existiert\n\
+mkdir -p /app/data /app/logs /app/backups\n\
+\n\
 echo "📊 Initialisiere Datenbank..."\n\
-\n\
-# Warte bis Datenbank-Datei existiert\n\
-mkdir -p /app/data\n\
-\n\
-# Führe Datenbankinitialisierung aus und warte auf Abschluss\n\
 python init_db.py\n\
-if [ $? -eq 0 ]; then\n\
-    echo "✅ Datenbank erfolgreich initialisiert!"\n\
-else\n\
-    echo "❌ Fehler bei Datenbankinitialisierung!"\n\
+\n\
+echo "🔍 Teste Datenbankverbindung..."\n\
+python test_db.py\n\
+if [ $? -ne 0 ]; then\n\
+    echo "❌ Datenbanktest fehlgeschlagen!"\n\
     exit 1\n\
 fi\n\
 \n\
-# Überprüfe ob alle Tabellen existieren\n\
-python -c "\n\
-import sqlite3\n\
-import os\n\
-db_path = os.environ.get('\''DATABASE_PATH'\'', '\''/app/data/options_tracker.db'\'')\n\
-conn = sqlite3.connect(db_path)\n\
-tables = ['\''basis_products'\'', '\''product_types'\'', '\''directions'\'', '\''strike_currencies'\'', '\''actions'\'', '\''products'\'', '\''transactions'\'', '\''settings'\'']\n\
-for table in tables:\n\
-    cursor = conn.execute(f'\''SELECT COUNT(*) FROM {table}'\'')\n\
-    count = cursor.fetchone()[0]\n\
-    print(f'\''  ✓ {table}: {count} Einträge'\'')\n\
-conn.close()\n\
-print('\''🔍 Alle Tabellen erfolgreich überprüft!'\'')\n\
-"\n\
+echo "⏳ Warte auf vollständige Datenbankinitialisierung..."\n\
+python test_db.py wait\n\
+if [ $? -ne 0 ]; then\n\
+    echo "❌ Datenbank nicht bereit!"\n\
+    exit 1\n\
+fi\n\
 \n\
+echo "✅ Datenbank erfolgreich initialisiert und getestet!"\n\
 echo "🌐 Starte Streamlit Server..."\n\
 exec streamlit run 1_Overview.py --server.port=8501 --server.address=0.0.0.0' > /app/start.sh
 
