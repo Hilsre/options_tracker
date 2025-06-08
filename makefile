@@ -1,108 +1,113 @@
 .PHONY: help build up down logs restart clean backup restore db-check db-reset
 
-# Default target
+# Standardziel
 help:
 	@echo "🚀 Options Tracker - Docker Management"
 	@echo "======================================"
 	@echo ""
-	@echo "Available Commands:"
-	@echo "  make build     - Build container"
-	@echo "  make up        - Start container"
-	@echo "  make down      - Stop container"
-	@echo "  make restart   - Restart container"
-	@echo "  make logs      - Show live logs"
-	@echo "  make clean     - Remove unused Docker objects"
+	@echo "Verfügbare Befehle:"
+	@echo "  make build     - Container bauen"
+	@echo "  make up        - Container starten"
+	@echo "  make down      - Container stoppen"
+	@echo "  make restart   - Container neu starten"
+	@echo "  make logs      - Live-Logs anzeigen"
+	@echo "  make clean     - Nicht verwendete Docker-Objekte löschen"
 	@echo ""
-	@echo "Database Commands:"
-	@echo "  make db-check  - Check database status"
-	@echo "  make db-reset  - Reset database"
-	@echo "  make backup    - Create database backup"
-	@echo "  make restore   - Restore backup"
+	@echo "Datenbank-Befehle:"
+	@echo "  make db-check  - Datenbankstatus prüfen"
+	@echo "  make db-reset  - Datenbank zurücksetzen"
+	@echo "  make backup    - Datenbank-Backup erstellen"
+	@echo "  make restore   - Backup wiederherstellen"
 	@echo ""
-	@echo "Access: http://localhost:8501"
+	@echo "Zugriff: http://localhost:8501"
 
-# Build container
+# Container bauen
 build:
-	@echo "🔨 Building Docker container..."
+	@echo "🔨 Baue Docker Container..."
 	docker-compose build --no-cache
 
-# Start container
+# Container starten
 up:
-	@echo "🚀 Starting Options Tracker..."
+	@echo "🚀 Starte Options Tracker..."
 	docker-compose up -d
-	@echo "✅ Options Tracker running at http://localhost:8501"
+	@echo "✅ Options Tracker läuft auf http://localhost:8501"
 
-# Stop container
+# Container stoppen
 down:
-	@echo "🛑 Stopping Options Tracker..."
+	@echo "🛑 Stoppe Options Tracker..."
 	docker-compose down
 
-# Show live logs
+# Live-Logs anzeigen
 logs:
-	@echo "📊 Live logs (Ctrl+C to stop):"
+	@echo "📊 Live-Logs (Ctrl+C zum Beenden):"
 	docker-compose logs -f options-tracker
 
-# Restart container
+# Container neu starten
 restart:
-	@echo "🔄 Restarting Options Tracker..."
+	@echo "🔄 Starte Options Tracker neu..."
 	docker-compose restart options-tracker
-	@echo "✅ Restart complete"
+	@echo "✅ Neustart abgeschlossen"
 
-# Clean up
+# Aufräumen
 clean:
-	@echo "🧹 Cleaning Docker system..."
+	@echo "🧹 Räume Docker-System auf..."
 	docker system prune -f
 	docker volume prune -f
 
-# Show status
+# Status anzeigen
 status:
-	@echo "📊 Container status:"
+	@echo "📊 Container-Status:"
 	docker-compose ps
 
-# Check database status
+# Datenbankstatus prüfen
 db-check:
-	@echo "📊 Checking database status..."
-	docker-compose exec options-tracker python init_db.py check
+	@echo "📊 Prüfe Datenbankstatus..."
+	docker-compose exec options-tracker python test_db.py
 
-# Reset database
+# Datenbanktest mit Wartezeit
+db-test:
+	@echo "🧪 Führe vollständigen Datenbanktest aus..."
+	docker-compose exec options-tracker python test_db.py wait
+
+# Datenbank zurücksetzen
 db-reset:
-	@echo "⚠️  Resetting database..."
-	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ]
+	@echo "⚠️  Setze Datenbank zurück..."
+	@read -p "Sind Sie sicher? (y/N): " confirm && [ "$$confirm" = "y" ]
 	docker-compose exec options-tracker python init_db.py reset
 
-# Create manual backup
+# Manuelles Backup erstellen
 backup:
-	@echo "💾 Creating database backup..."
+	@echo "💾 Erstelle Datenbank-Backup..."
 	@timestamp=$$(date +%Y%m%d_%H%M%S) && \
 	docker-compose exec options-tracker sqlite3 /app/data/options_tracker.db ".backup /app/backups/manual_backup_$$timestamp.db" && \
-	echo "✅ Backup created: manual_backup_$$timestamp.db"
+	echo "✅ Backup erstellt: manual_backup_$$timestamp.db"
 
-# Restore backup
+# Backup wiederherstellen
 restore:
-	@echo "📁 Available backups:"
-	@ls -la ./backups/*.db 2>/dev/null || echo "No backups found"
+	@echo "📁 Verfügbare Backups:"
+	@ls -la ./backups/*.db 2>/dev/null || echo "Keine Backups gefunden"
 	@echo ""
-	@read -p "Backup filename (without path): " backup_file && \
+	@read -p "Backup-Dateiname (ohne Pfad): " backup_file && \
 	if [ -f "./backups/$$backup_file" ]; then \
-		echo "🔄 Restoring backup: $$backup_file"; \
+		echo "🔄 Stelle Backup wieder her: $$backup_file"; \
 		docker-compose exec options-tracker cp "/app/backups/$$backup_file" "/app/data/options_tracker.db" && \
-		echo "✅ Backup successfully restored"; \
+		echo "✅ Backup erfolgreich wiederhergestellt"; \
 	else \
-		echo "❌ Backup file not found: $$backup_file"; \
+		echo "❌ Backup-Datei nicht gefunden: $$backup_file"; \
 	fi
 
-# Development mode (with automatic restarts)
+# Entwicklungsmodus (mit automatischen Neustarts)
 dev:
-	@echo "🔧 Starting in development mode..."
+	@echo "🔧 Starte im Entwicklungsmodus..."
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
-# Open shell in container
+# Shell im Container öffnen
 shell:
-	@echo "🐚 Opening shell in container..."
+	@echo "🐚 Öffne Shell im Container..."
 	docker-compose exec options-tracker /bin/bash
 
-# Download container logs
+# Container-Logs herunterladen
 download-logs:
 	@timestamp=$$(date +%Y%m%d_%H%M%S) && \
 	docker-compose logs options-tracker > "logs_$$timestamp.txt" && \
-	echo "✅ Logs saved in: logs_$$timestamp.txt"
+	echo "✅ Logs gespeichert in: logs_$$timestamp.txt"
