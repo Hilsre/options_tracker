@@ -1,159 +1,238 @@
-#!/usr/bin/env python3
-"""
-Database Initialization Script für Options Tracker
-Erstellt die notwendigen Tabellen falls sie nicht existieren
-"""
-
 import sqlite3
 import os
-from pathlib import Path
 
-# Datenbankpfad aus Environment Variable oder Default
-DB_PATH = os.getenv('DATABASE_PATH', '/app/data/options_tracker.db')
+def get_db():
+    db_path = os.environ.get('DATABASE_PATH', './data/options_tracker.db')
+    
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    
+    conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA foreign_keys = ON") 
+    return conn
+
+def create_tables():
+    conn = get_db()
+    
+    # Basis Products Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS basis_products (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # Product Types Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS product_types (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # Directions Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS directions (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # Strike Currencies Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS strike_currencies (
+            id INTEGER PRIMARY KEY,
+            symbol TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # Actions Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS actions (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE NOT NULL
+        )
+    """)
+
+    # Products Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY,
+            basis_product_id INTEGER NOT NULL,
+            product_type_id INTEGER NOT NULL,
+            direction_id INTEGER NOT NULL,
+            strike REAL NOT NULL,
+            strike_currency_id INTEGER NOT NULL,
+            wkn TEXT UNIQUE,
+            name TEXT,
+            expiry_date DATE,
+            FOREIGN KEY (basis_product_id) REFERENCES basis_products(id),
+            FOREIGN KEY (product_type_id) REFERENCES product_types(id),
+            FOREIGN KEY (direction_id) REFERENCES directions(id),
+            FOREIGN KEY (strike_currency_id) REFERENCES strike_currencies(id)
+        )
+    """)
+
+    # Transactions Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY,
+            trade_id INTEGER NOT NULL,
+            date DATE NOT NULL,
+            product_id INTEGER NOT NULL,
+            price REAL NOT NULL,
+            qty INTEGER NOT NULL,
+            fee INTEGER DEFAULT 1,
+            tax REAL DEFAULT 0.0,
+            total_price REAL NOT NULL,
+            gain REAL DEFAULT 0,
+            price_correct INTEGER DEFAULT 1,
+            action_id INTEGER NOT NULL,
+            open_qty INTEGER,
+            FOREIGN KEY (product_id) REFERENCES products(id),
+            FOREIGN KEY (action_id) REFERENCES actions(id)
+        )
+    """)
+
+    # Settings Table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            user_id TEXT PRIMARY KEY,
+            language_code TEXT DEFAULT 'en',
+            tax_rate REAL DEFAULT 0.0,
+            date_format TEXT DEFAULT 'DD.MM.YYYY',
+            tax_allowance REAL DEFAULT 0.0,
+            loss_carryforward REAL DEFAULT 0.0,
+            theme_mode TEXT DEFAULT 'Dark'
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+def fill_tables():
+    conn = get_db()
+    
+    try:
+        conn.execute("""
+            INSERT OR IGNORE INTO basis_products (name) VALUES 
+            ('Rheinmetall AG'), 
+            ('Renk Group'), 
+            ('DAX'), 
+            ('S&P500'), 
+            ('Nasdaq'), 
+            ('Nvidia'), 
+            ('Apple'), 
+            ('Amazon'), 
+            ('Meta'), 
+            ('Hensoldt AG'), 
+            ('Thyssenkrupp AG'), 
+            ('Coinbase')
+        """)
+
+        conn.execute("""
+            INSERT OR IGNORE INTO actions (name) VALUES 
+            ('buy'), 
+            ('sell'), 
+            ('rebuy'), 
+            ('partial sell'), 
+            ('redemption'), 
+            ('knock-out')
+        """)
+
+        conn.execute("""
+            INSERT OR IGNORE INTO directions (name) VALUES 
+            ('Long'), 
+            ('Short'), 
+            ('Call'), 
+            ('Put')
+        """)
+
+        conn.execute("""
+            INSERT OR IGNORE INTO product_types (name) VALUES 
+            ('Knock-Out'), 
+            ('Warrant'), 
+            ('Factor')
+        """)
+
+        conn.execute("""
+            INSERT OR IGNORE INTO strike_currencies (symbol) VALUES 
+            ('€'), 
+            ('$'), 
+            ('Pkt.')
+        """)
+
+        conn.execute("""
+            INSERT OR IGNORE INTO settings VALUES 
+            ('default', 'en', 0.0, 'DD.MM.YYYY', 0.0, 0.0, 'Dark')
+        """)
+
+        conn.commit()
+        
+    except sqlite3.Error as e:
+        conn.rollback()
+    finally:
+        conn.close()
+
+def check_database():
+    conn = get_db()
+    
+    tables = [
+        'basis_products', 'product_types', 'directions', 
+        'strike_currencies', 'actions', 'products', 
+        'transactions', 'settings'
+    ]
+    
+    
+    for table in tables:
+        try:
+            cursor = conn.execute(f"SELECT COUNT(*) FROM {table}")
+            count = cursor.fetchone()[0]
+            print(f"  {table:<20}: {count} Entries")
+        except sqlite3.Error as e:
+            print(f"  {table:<20}: ❌ Error - {e}")
+    
+    conn.close()
+
+def reset_database():
+    conn = get_db()
+    
+    tables = [
+        'transactions', 'products', 'settings', 'actions', 
+        'strike_currencies', 'directions', 'product_types', 'basis_products'
+    ]
+    
+    
+    for table in tables:
+        try:
+            conn.execute(f"DROP TABLE IF EXISTS {table}")
+            print(f"  - Tabelle {table} gelöscht")
+        except sqlite3.Error as e:
+            print(f"  - Error while deleting {table}: {e}")
+    
+    conn.commit()
+    conn.close()
 
 def init_database():
-    """Initialisiert die Datenbank mit allen notwendigen Tabellen"""
-    
-    # Stelle sicher, dass das Verzeichnis existiert
-    db_dir = Path(DB_PATH).parent
-    db_dir.mkdir(parents=True, exist_ok=True)
-    
-    print(f"Initialisiere Datenbank: {DB_PATH}")
-    
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        
-        # Schema Version Tabelle
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS schema_version (
-                version INTEGER PRIMARY KEY,
-                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Produkte/Instrumente Tabelle
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS instruments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                isin TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                instrument_type TEXT NOT NULL,
-                underlying TEXT,
-                strike_price REAL,
-                expiry_date DATE,
-                barrier REAL,
-                leverage REAL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Transaktionen Tabelle
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS transactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                instrument_id INTEGER NOT NULL,
-                transaction_type TEXT NOT NULL,
-                transaction_date DATE NOT NULL,
-                quantity INTEGER NOT NULL,
-                price_per_unit REAL NOT NULL,
-                total_amount REAL NOT NULL,
-                fees REAL DEFAULT 0,
-                tax REAL DEFAULT 0,
-                broker TEXT,
-                notes TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (instrument_id) REFERENCES instruments (id)
-            )
-        ''')
-        
-        # Positionen Tabelle (für FIFO-Berechnungen)
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS positions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                instrument_id INTEGER NOT NULL,
-                quantity INTEGER NOT NULL,
-                avg_price REAL NOT NULL,
-                total_invested REAL NOT NULL,
-                realized_pnl REAL DEFAULT 0,
-                unrealized_pnl REAL DEFAULT 0,
-                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (instrument_id) REFERENCES instruments (id)
-            )
-        ''')
-        
-        # Steuerliche Ereignisse Tabelle
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tax_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                transaction_id INTEGER NOT NULL,
-                event_type TEXT NOT NULL,
-                tax_year INTEGER NOT NULL,
-                realized_gain_loss REAL NOT NULL,
-                tax_base REAL NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (transaction_id) REFERENCES transactions (id)
-            )
-        ''')
-        
-        # Indizes für bessere Performance
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions (transaction_date)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_transactions_instrument ON transactions (instrument_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_instruments_isin ON instruments (isin)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_tax_events_year ON tax_events (tax_year)')
-        
-        # Prüfe ob Schema Version existiert, wenn nicht setze auf 1
-        cursor.execute('SELECT COUNT(*) FROM schema_version')
-        if cursor.fetchone()[0] == 0:
-            cursor.execute('INSERT INTO schema_version (version) VALUES (1)')
-            print("Schema Version auf 1 gesetzt")
-        
-        conn.commit()
-        print("Datenbank erfolgreich initialisiert")
-        
-        # Debug: Zeige verfügbare Tabellen
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = cursor.fetchall()
-        print(f"Verfügbare Tabellen: {[table[0] for table in tables]}")
-        
-    except Exception as e:
-        print(f"Fehler bei der Datenbankinitialisierung: {e}")
-        raise
-    finally:
-        conn.close()
-
-def check_database_health():
-    """Prüft die Gesundheit der Datenbank"""
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        
-        # Prüfe ob alle Tabellen existieren
-        required_tables = ['instruments', 'transactions', 'positions', 'tax_events', 'schema_version']
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        existing_tables = [row[0] for row in cursor.fetchall()]
-        
-        missing_tables = set(required_tables) - set(existing_tables)
-        if missing_tables:
-            print(f"Fehlende Tabellen: {missing_tables}")
-            return False
-        
-        print("Datenbankgesundheit: OK")
-        return True
-        
-    except Exception as e:
-        print(f"Fehler bei Datenbankprüfung: {e}")
-        return False
-    finally:
-        conn.close()
+    create_tables()
+    fill_tables()
+    check_database()
 
 if __name__ == "__main__":
-    print("=== Options Tracker DB Initialisierung ===")
-    init_database()
+    import sys
     
-    if check_database_health():
-        print("✅ Datenbank bereit für Streamlit")
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "reset":
+            reset_database()
+            init_database()
+        elif sys.argv[1] == "check":
+            check_database()
+        elif sys.argv[1] == "fill":
+            fill_tables()
+        else:
+            print("Available options:")
+            print("  python init_db.py)
+            print("  python init_db.py reset")
+            print("  python init_db.py check")
+            print("  python init_db.py fill")
     else:
-        print("❌ Datenbankprobleme erkannt")
-        exit(1)
+        init_database()
