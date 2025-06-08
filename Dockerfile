@@ -29,7 +29,12 @@ COPY . .
 # Ordner für persistent data erstellen
 RUN mkdir -p /app/data && \
     mkdir -p /app/backups && \
+    mkdir -p /app/logs && \
     chown -R appuser:appuser /app
+
+# DB-Initialisierung Script
+COPY init_db.py /app/
+RUN chown appuser:appuser /app/init_db.py
 
 # User wechseln
 USER appuser
@@ -45,5 +50,5 @@ HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=3 \
 # Port freigeben
 EXPOSE 8501
 
-# Startbefehl
-CMD ["streamlit", "run", "1_Overview.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--server.fileWatcherType=none"]
+# Startbefehl mit DB-Initialisierung
+CMD ["sh", "-c", "python init_db.py && streamlit run 1_Overview.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true --server.fileWatcherType=none"]
