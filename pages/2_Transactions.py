@@ -6,7 +6,7 @@ from datetime import date
 from utils.db_helper import (get_options, new_transaction, get_product_choices, update_open_qty, get_db,
                              update_loss_carryforward, update_tax_allowance)
 from utils.buy_helper import get_direction_id, get_or_create_product_id, get_or_create_trade_id
-from utils.sell_helper import calc_sell_tax, calc_partial_sell_tax, tax_allowance
+from utils.sell_helper import calc_sell_tax, calc_partial_sell_tax
 from utils.settings_handler import get_lang, load_settings
 
 st.set_page_config(page_title="OptionsTracker – Transactions", layout="wide", page_icon="📥")

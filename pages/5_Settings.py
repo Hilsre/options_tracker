@@ -65,12 +65,23 @@ new_date_label = st.selectbox(
 
 st.session_state.date_format = date_formats[new_date_label]
 
+# # --------Theme (Dark/Light) -----
+# THEME = sh.THEME
+# st.subheader("Theme Mode")
+# current_theme = st.session_state.get("theme_mode", "Dark")
+# new_theme = st.radio("🌚Theme: ", list(THEME.keys()),
+#                                           index=list(THEME.values()).index(st.session_state.theme_mode))
+# st.session_state.theme_mode = THEME[new_theme]
+
+
+
 if st.button(T["save_settings"]):
     save_settings({
         "language_code": st.session_state.language_code,
         "tax_rate": st.session_state.tax_rate,
         "date_format": st.session_state.date_format,
         "tax_allowance": st.session_state.tax_allowance,
-        "loss_carryforward": st.session_state.loss_carryforward
+        "loss_carryforward": st.session_state.loss_carryforward,
+        "theme_mode":st.session_state.theme_mode
     })
     st.rerun()

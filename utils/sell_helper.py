@@ -6,9 +6,10 @@ if "tax_rate" not in st.session_state:
     settings = load_settings()
     st.session_state["tax_rate"] = settings["tax_rate"]
 
-tax_rate = st.session_state["tax_rate"]
-tax_allowance = st.session_state["tax_allowance"]
-loss_carryforward = st.session_state["loss_carryforward"]
+load_settings()
+tax_rate = st.session_state.get("tax_rate")
+tax_allowance = st.session_state.get("tax_allowance")
+loss_carryforward = st.session_state.get("loss_carryforward")
 
 
 def calc_sell_tax(price, qty, price_paid, fee):
@@ -28,7 +29,7 @@ def calc_sell_tax(price, qty, price_paid, fee):
 
     else:
         tax = 0
-        new_loss_carryforward = loss_carryforward + abs(gross_gain)
+        new_loss_carryforward = loss_carryforward + float(abs(gross_gain))
         new_allowance = tax_allowance
 
     return ((price*qty) - fee - tax), tax, new_loss_carryforward, new_allowance

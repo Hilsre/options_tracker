@@ -7,6 +7,11 @@ LANGUAGES = {
         "Deutsch": "de"
     }
 
+THEME = {
+    "Dark": "Dark",
+    "Light": "Light"
+}
+
 
 def get_lang():
 
@@ -21,6 +26,13 @@ def get_lang():
     lang_module = importlib.import_module(f"lang.{st.session_state.language_code}")
     return lang_module.translations
 
+def get_theme_mode():
+    if "theme_mode" not in st.session_state:
+        st.session_state.theme_mode = "dark"
+
+    theme_mode_display = st.sidebar.radio("🖼 Theme: ", list(THEME.keys()),
+                                          index=list(THEME.values()).index(st.session_state.theme_mode))
+    st.session_state.theme_mode = THEME[theme_mode_display]
 
 def init_settings_db():
     conn = get_db()
@@ -41,7 +53,7 @@ def init_settings_db():
 def load_settings(user_id="default"):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT language_code, tax_rate, date_format, tax_allowance, loss_carryforward FROM settings WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT language_code, tax_rate, date_format, tax_allowance, loss_carryforward, theme_mode FROM settings WHERE user_id = ?", (user_id,))
     row = cursor.fetchone()
     conn.close()
 
@@ -51,27 +63,31 @@ def load_settings(user_id="default"):
             "tax_rate": row[1],
             "date_format": row[2],
             "tax_allowance": row[3],
-            "loss_carryforward": row[4]
+            "loss_carryforward": row[4],
+            "theme_mode": row[5]
         }
     else:
-        save_settings({"language_code": "en", "tax_rate": 0.0, "date_format": "%d.%m.%Y", "tax_allowance": 0.0, "loss_carryforward": 0.0}, user_id)
+        save_settings({"language_code": "en", "tax_rate": 0.0, "date_format": "%d.%m.%Y", "tax_allowance": 0.0, "loss_carryforward": 0.0, "theme_mode":"Dark"}, user_id)
         return load_settings(user_id)
 
 
 def save_settings(settings, user_id="default"):
     conn = get_db()
     conn.execute("""
-        INSERT INTO settings (user_id, language_code, tax_rate, date_format, tax_allowance, loss_carryforward)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO settings (user_id, language_code, tax_rate, date_format, tax_allowance, loss_carryforward, theme_mode)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             language_code=excluded.language_code,
             tax_rate=excluded.tax_rate,
             date_format=excluded.date_format,
             tax_allowance=excluded.tax_allowance,
-            loss_carryforward=excluded.loss_carryforward
-    """, (user_id, settings["language_code"], settings["tax_rate"], settings["date_format"], settings["tax_allowance"], settings["loss_carryforward"]))
+            loss_carryforward=excluded.loss_carryforward,
+            theme_mode=excluded.theme_mode
+    """, (user_id, settings["language_code"], settings["tax_rate"], settings["date_format"], settings["tax_allowance"],
+          settings["loss_carryforward"], settings["theme_mode"]))
     conn.commit()
     conn.close()
 
 if __name__=="__main__":
-    init_settings_db()
+    if "theme_mode" not in st.session_state:
+        st.session_state.theme_mode = "Dark"
