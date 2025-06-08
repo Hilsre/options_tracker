@@ -1,4 +1,4 @@
-version: '3.8'
+# Portainer-optimized docker-compose.yml
 
 services:
   options-tracker:
@@ -9,10 +9,8 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      # Persistente Datenbank-Speicherung
       - ./data:/app/data
       - ./backups:/app/backups
-      # Optional: Logs persistent speichern
       - ./logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
@@ -20,7 +18,6 @@ services:
       - STREAMLIT_SERVER_PORT=8501
       - STREAMLIT_SERVER_HEADLESS=true
       - STREAMLIT_SERVER_FILE_WATCHER_TYPE=none
-      # Datenbank-Pfad
       - DATABASE_PATH=/app/data/options_tracker.db
     restart: unless-stopped
     healthcheck:
@@ -30,7 +27,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # Optional: Backup-Service
   backup-service:
     image: alpine:latest
     container_name: options-tracker-backup
