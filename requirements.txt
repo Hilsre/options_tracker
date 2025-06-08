@@ -5,8 +5,7 @@ streamlit>=1.28.0
 pandas>=2.0.0
 numpy>=1.24.0
 
-# Database
-sqlite3  # Built-in Python module, aber explizit aufgeführt
+# Database - sqlite3 ist built-in, nicht in requirements.txt notwendig
 
 # Date/Time handling
 python-dateutil>=2.8.0
