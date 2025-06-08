@@ -1,5 +1,30 @@
-streamlit>=1.45.1
-pandas>=2.1.0
-python-dateutil>=2.8.2
-plotly==6.1.2
+# Streamlit Framework
+streamlit>=1.28.0
 
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Database
+sqlite3  # Built-in Python module, aber explizit aufgeführt
+
+# Date/Time handling
+python-dateutil>=2.8.0
+
+# File handling
+openpyxl>=3.1.0  # Für Excel Export/Import
+xlsxwriter>=3.1.0  # Alternative für Excel Writing
+
+# Web requests (für Healthcheck)
+requests>=2.31.0
+
+# Plotting (optional für Charts)
+plotly>=5.15.0
+matplotlib>=3.7.0
+
+# Utilities
+python-dotenv>=1.0.0  # Für Environment Variables
+
+# Development/Testing (optional)
+pytest>=7.4.0
+pytest-cov>=4.1.0
