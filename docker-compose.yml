@@ -1,23 +1,25 @@
-# Portainer-optimized docker-compose.yml
+version: '3.8'
 
 services:
   options-tracker:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: options-tracker-app
     ports:
-      - "8501:8501"
+      - "8501:8501"  # Streamlit Standard-Port
     volumes:
+      # Persistenter Speicher für SQLite-Datenbank
       - ./data:/app/data
-      - ./backups:/app/backups
+      # Optional: Logs persistent speichern
       - ./logs:/app/logs
     environment:
-      - PYTHONUNBUFFERED=1
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      # Streamlit-Konfiguration
       - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
-      - STREAMLIT_SERVER_FILE_WATCHER_TYPE=none
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      # Datenbank-Pfad (falls konfigurierbar)
       - DATABASE_PATH=/app/data/options_tracker.db
     restart: unless-stopped
     healthcheck:
@@ -25,32 +27,42 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
+    networks:
+      - options-network
 
-  backup-service:
+  # Optional: Backup-Service für die Datenbank
+  db-backup:
     image: alpine:latest
     container_name: options-tracker-backup
     volumes:
-      - ./data:/source/data:ro
-      - ./backups:/backups
-    environment:
-      - BACKUP_INTERVAL=24h
-    command: |
+      - ./data:/app/data
+      - ./backups:/app/backups
+    command: >
       sh -c "
+        apk add --no-cache sqlite &&
         while true; do
-          echo 'Creating backup...'
-          timestamp=$$(date +%Y%m%d_%H%M%S)
-          cp /source/data/options_tracker.db /backups/backup_$$timestamp.db
-          # Alte Backups löschen (älter als 30 Tage)
-          find /backups -name '*.db' -mtime +30 -delete
-          echo 'Backup completed'
-          sleep $$BACKUP_INTERVAL
+          if [ -f /app/data/options_tracker.db ]; then
+            timestamp=$$(date +%Y%m%d_%H%M%S)
+            sqlite3 /app/data/options_tracker.db '.backup /app/backups/options_tracker_backup_'$$timestamp'.db'
+            echo 'Backup created: options_tracker_backup_'$$timestamp'.db'
+            # Alte Backups löschen (älter als 30 Tage)
+            find /app/backups -name '*.db' -mtime +30 -delete
+          fi
+          sleep 86400  # Täglich um Mitternacht
         done
       "
+    restart: unless-stopped
     depends_on:
       - options-tracker
-    restart: unless-stopped
+    networks:
+      - options-network
 
 networks:
-  default:
-    name: options-tracker-network
+  options-network:
+    driver: bridge
+
+volumes:
+  # Explizite Volume-Definition für bessere Kontrolle
+  options-data:
+    driver: local
