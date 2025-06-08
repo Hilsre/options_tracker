@@ -38,9 +38,9 @@ USER appuser
 ENV PATH=/home/appuser/.local/bin:$PATH
 ENV PYTHONPATH=/app
 
-# Healthcheck hinzufügen
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+# Healthcheck mit curl installieren
+HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8501/_stcore/health', timeout=10)" || exit 1
 
 # Port freigeben
 EXPOSE 8501
