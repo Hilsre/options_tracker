@@ -79,7 +79,7 @@ def create_tables():
                 direction_id INTEGER NOT NULL,
                 strike REAL NOT NULL,
                 strike_currency_id INTEGER NOT NULL,
-                wkn TEXT UNIQUE,
+                wkn TEXT,
                 name TEXT,
                 expiry_date DATE,
                 FOREIGN KEY (basis_product_id) REFERENCES basis_products(id),
