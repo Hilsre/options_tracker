@@ -1,13 +1,80 @@
 import os
 import sqlite3
 import streamlit as st
+import logging
 
 def get_db():
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(base_path, "..", "db", "new_test.db")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """
+    Robuste Datenbankverbindungsfunktion, die verschiedene Pfade ausprobiert
+    und sowohl in lokaler Entwicklung als auch in Docker-Containern funktioniert.
+    """
+    
+    # Liste möglicher Datenbankpfade (in Prioritätsreihenfolge)
+    possible_paths = [
+        # Docker-Container Pfade
+        "/app/db/options_tracker.db",
+        "/app/options_tracker.db", 
+        "./db/options_tracker.db",
+        "./options_tracker.db",
+        
+        # Relative Pfade basierend auf aktueller Datei
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "options_tracker.db"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "db", "options_tracker.db"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "options_tracker.db"),
+        
+        # Pfade basierend auf Working Directory
+        os.path.join(os.getcwd(), "db", "options_tracker.db"),
+        os.path.join(os.getcwd(), "options_tracker.db"),
+        
+        # Root-Level Suche
+        os.path.join("/", "db", "options_tracker.db"),
+    ]
+    
+    # Durchsuche alle möglichen Pfade
+    for db_path in possible_paths:
+        try:
+            # Normalisiere den Pfad
+            normalized_path = os.path.normpath(db_path)
+            
+            # Prüfe ob die Datei existiert
+            if os.path.exists(normalized_path):
+                # Teste die Verbindung
+                conn = sqlite3.connect(normalized_path)
+                conn.row_factory = sqlite3.Row
+                
+                # Teste ob es eine gültige SQLite-Datenbank ist
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = cursor.fetchall()
+                
+                if tables:  # Wenn Tabellen vorhanden sind
+                    logging.info(f"Datenbankverbindung erfolgreich: {normalized_path}")
+                    return conn
+                else:
+                    conn.close()
+                    logging.warning(f"Datenbank gefunden aber leer: {normalized_path}")
+                    
+        except Exception as e:
+            logging.debug(f"Fehler bei Pfad {db_path}: {str(e)}")
+            continue
+    
+    # Wenn keine existierende Datenbank gefunden wurde, erstelle eine neue
+    # Bevorzuge Docker-Container Pfad wenn wir in einem Container sind
+    if os.path.exists('/app'):
+        default_path = "/app/db/options_tracker.db"
+        os.makedirs("/app/db", exist_ok=True)
+    else:
+        default_path = os.path.join(os.getcwd(), "db", "options_tracker.db")
+        os.makedirs(os.path.join(os.getcwd(), "db"), exist_ok=True)
+    
+    try:
+        logging.info(f"Erstelle neue Datenbank: {default_path}")
+        conn = sqlite3.connect(default_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        logging.error(f"Fehler beim Erstellen der Datenbank: {str(e)}")
+        raise Exception(f"Konnte keine Datenbankverbindung herstellen: {str(e)}")
 
 
 def get_options(query):
