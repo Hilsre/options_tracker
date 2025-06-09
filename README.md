@@ -2,7 +2,8 @@
 
 An interactive tool for managing and analyzing leveraged products and derivative financial transactions — built with Streamlit and SQLite.
 
-![Options Tracker](images/overview.png)
+![Options Tracker](images/Overview_1.png)
+![Options Tracker](images/Overview_2.png)
 
 ## Features ✨
 
