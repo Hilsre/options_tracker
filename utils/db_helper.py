@@ -16,6 +16,7 @@ def get_db():
         "/app/options_tracker.db", 
         "./db/options_tracker.db",
         "./options_tracker.db",
+        "/app/data/options_tracker.db",
         
         # Relative Pfade basierend auf aktueller Datei
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "db", "options_tracker.db"),
