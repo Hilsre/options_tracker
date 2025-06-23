@@ -3,7 +3,7 @@ import os
 
 def get_db():
     """Datenbankverbindung herstellen"""
-    db_path = os.environ.get('DATABASE_PATH', './db/options_tracker.db')
+    db_path = os.environ.get('DATABASE_PATH', './data/options_tracker.db')
     
     # Stelle sicher, dass das Verzeichnis existiert
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
